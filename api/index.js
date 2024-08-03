@@ -7,7 +7,7 @@ import e from "child_process"
 const exec = e.exec
 const PORT = process.env.PORT;
 const app = express();
-const secret = "2u8ja8j823"
+const secret = process.env.SECRET;
 const repo = "/var/www/web"
 
 
