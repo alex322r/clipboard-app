@@ -3,13 +3,21 @@ import db from "./db.js";
 import cors from "cors";
 import crypto from "crypto"
 import e from "child_process"
+import { createServer, METHODS } from "http";
+import { Server } from "socket.io";
 
-const exec = e.exec
+const exec = e.exec;
 const PORT = process.env.PORT;
 const app = express();
 const secret = process.env.SECRET;
-const repo = "/var/www/web"
-
+const repo = "/var/www/web";
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:8080",
+    methods: ["GET", "POST"]
+  }
+});
 
 import textRouter from "./routes/texts.js";
 import deleteRouter from "./routes/delete.js";
@@ -17,11 +25,27 @@ import deleteRouter from "./routes/delete.js";
 app.use(cors());
 app.use(express.json());
 
+
+
+// socket.io  
+
+io.on("connection", (socket) => {
+  console.log("a user has connected")
+  socket.on("disconnect", () => {
+    console.log("a user has disconnected !!")
+  })
+  socket.on("text", (id, text) => {
+    console.log(id, text)
+    io.emit("res", id, text)
+  })
+})
+
+
+
+
 app.get("/api", (req, res) => {
   res.send({ message: "hello World" });
-});
 
-app.post("/api/webhook", (req, res) => {
   let signature = req.headers['x-hub-signature']
   if (!signature) {
     return res.status(400).send('no signature provide')
@@ -48,7 +72,7 @@ app.post("/api/webhook", (req, res) => {
 app.use("/api/texts", textRouter);
 app.use("/api/delete", deleteRouter);
 
-app.listen(PORT || 5000, () => {
+server.listen(PORT || 5000, () => {
   console.log(`the server is listening in ${PORT || 5000}`);
 });
 
